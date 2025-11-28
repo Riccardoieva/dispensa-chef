@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 
 # ---------------- CONFIGURAZIONE ----------------
-# ⚠️ INCOLLA QUI LA TUA API KEY (Dentro le virgolette!)
+# inserire la API key 
 API_KEY = "AIzaSyCZ0A-zF7dONFvNwc4B1Q41RprKxhbtGqo"
 
 st.set_page_config(page_title="Dispensa AI Chef", page_icon="🧑‍🍳")
@@ -10,16 +10,16 @@ st.set_page_config(page_title="Dispensa AI Chef", page_icon="🧑‍🍳")
 # Controllo di sicurezza per la Chiave
 if not API_KEY:
     st.error("⛔ STOP! Hai dimenticato di inserire la tua Chiave API alla riga 6 del file app.py")
-    st.stop() # Ferma tutto finché non la inserisci
+    st.stop() # Ferma python in modo che non legga altre righe finché non viene inserita la chiave
 
 # Configura l'IA
 try:
-    genai.configure(api_key=API_KEY)
+    genai.configure(api_key=API_KEY) # attiva il collegamento con l'ai
 except Exception as e:
-    st.error(f"Errore Configurazione Chiave: {e}")
+    st.error(f"Errore Configurazione Chiave: {e}") # mostra errore a schermo
 
 # ---------------- MEMORIA ----------------
-if 'dispensa' not in st.session_state:
+if 'dispensa' not in st.session_state: # st.session_state è una memoria che salva la lista della dispensa
     st.session_state.dispensa = [
         {'id': 1, 'nome': 'Pasta', 'qta': '500g', 'selezionato': True},
         {'id': 2, 'nome': 'Uova', 'qta': '4', 'selezionato': True}
@@ -30,25 +30,25 @@ def aggiungi_ingrediente():
     nome = st.session_state.input_nome
     qta = st.session_state.input_qta
     if nome:
-        nuovo_id = len(st.session_state.dispensa) + 100
+        nuovo_id = len(st.session_state.dispensa) + 100 # crea un nuovo id ed aggiunge 100 in modo da renderlo univoco
         st.session_state.dispensa.append({
             'id': nuovo_id, 'nome': nome, 'qta': qta, 'selezionato': True
         })
-        st.session_state.input_nome = ""
+        st.session_state.input_nome = "" # pulisce i campi per quando inseriremo il prossimo ingrediente
         st.session_state.input_qta = ""
 
-def elimina_ingrediente(id_da_eliminare):
+def elimina_ingrediente(id_da_eliminare): # elimina l'igrediente e lascia in bacheca quelli con un id diverso 
     st.session_state.dispensa = [
         item for item in st.session_state.dispensa 
         if item['id'] != id_da_eliminare
     ]
 
-# ---------------- INTERFACCIA ----------------
+# ---------------- INTERFACCIA GRAFICA----------------
 st.title("🧑‍🍳 Dispensa AI Chef")
 
 # SEZIONE INSERIMENTO
-with st.container(border=True):
-    col1, col2, col3 = st.columns([3, 2, 2], vertical_alignment="bottom")
+with st.container(border=True): # crea un riquadro per l'inserimento
+    col1, col2, col3 = st.columns([3, 2, 2], vertical_alignment="bottom") # crea 3 colonne per l'inserimento con le dimensioni specificate
     with col1:
         st.text_input("Ingrediente", key="input_nome", placeholder="Es. Farina")
     with col2:
