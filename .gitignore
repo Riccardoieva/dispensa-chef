@@ -1,0 +1,10 @@
+Ignora i file segreti
+
+.streamlit/secrets.toml
+
+Ignora file inutili
+
+pycache/
+*.pyc
+.venv/
+.DS_Store
