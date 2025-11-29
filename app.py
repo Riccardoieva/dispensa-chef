@@ -100,4 +100,4 @@ if st.button("✨ Inventa Ricetta con IA", type="primary", use_container_width=T
 if 'ricetta' in st.session_state:
     st.markdown("---")
     st.success("Ecco la tua ricetta!")
-    st.markdown(st.session_state.ricetta)
+    st.markdown(st.session_state.ricetta)#evvai
