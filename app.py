@@ -3,14 +3,21 @@ import google.generativeai as genai
 
 # ---------------- CONFIGURAZIONE ----------------
 # inserire la API key 
-API_KEY = "AIzaSyCZ0A-zF7dONFvNwc4B1Q41RprKxhbtGqo"
+# 🔐 GESTIONE SICUREZZA API KEY
+# L'app cercherà la chiave nel "nascondiglio" (st.secrets)
+try:
+    if "GEMINI_API_KEY" in st.secrets:
+        API_KEY = st.secrets["GEMINI_API_KEY"]
+    else:
+        # Se non la trova nei secrets, prova a cercarla nelle variabili d'ambiente (utile per il cloud)
+        API_KEY = os.getenv("GEMINI_API_KEY")
 
-st.set_page_config(page_title="Dispensa AI Chef", page_icon="🧑‍🍳")
-
-# Controllo di sicurezza per la Chiave
-if not API_KEY:
-    st.error("⛔ STOP! Hai dimenticato di inserire la tua Chiave API alla riga 6 del file app.py")
-    st.stop() # Ferma python in modo che non legga altre righe finché non viene inserita la chiave
+    if not API_KEY:
+        st.error("⛔ ERRORE: Chiave API non trovata!")
+        st.stop()
+except FileNonTrovato:
+    st.error("⛔ Manca la cartella .streamlit o il file secrets.toml")
+    st.stop()
 
 # Configura l'IA
 try:
