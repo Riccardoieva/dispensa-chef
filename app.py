@@ -1,5 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
+import json
+FILE_DATI= "dispensa.json"
 
 # ---------------- CONFIGURAZIONE ----------------
 # inserire la API key 
@@ -15,7 +17,7 @@ try:
     if not API_KEY:
         st.error("⛔ ERRORE: Chiave API non trovata!")
         st.stop()
-except FileNonTrovato:
+except FileNotFoundError:
     st.error("⛔ Manca la cartella .streamlit o il file secrets.toml")
     st.stop()
 
@@ -25,14 +27,18 @@ try:
 except Exception as e:
     st.error(f"Errore Configurazione Chiave: {e}") # mostra errore a schermo
 
-# ---------------- MEMORIA ----------------
-if 'dispensa' not in st.session_state: # st.session_state è una memoria che salva la lista della dispensa
-    st.session_state.dispensa = [
-        {'id': 1, 'nome': 'Pasta', 'qta': '500g', 'selezionato': True},
-        {'id': 2, 'nome': 'Uova', 'qta': '4', 'selezionato': True}
-    ]
-
 # ---------------- FUNZIONI ----------------
+def salva_dati():                      #salva_dati(): Apre il quaderno (FILE_DATI) in modalità scrittura ("w") 
+    with open(FILE_DATI, 'w') as f:    # e ci copia dentro (dump) tutto quello che c'è nella dispensa attuale.
+        json.dump(st.session_state.dispensa, f)
+
+def carica_dati():     #Apre il quaderno in lettura ("r") e carica i dati dentro la dispensa.
+    try:
+        with open(FILE_DATI, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:   #se il quaderno non esiste, crea una dispensa vuota.
+        return []
+
 def aggiungi_ingrediente():
     nome = st.session_state.input_nome
     qta = st.session_state.input_qta
@@ -41,6 +47,7 @@ def aggiungi_ingrediente():
         st.session_state.dispensa.append({
             'id': nuovo_id, 'nome': nome, 'qta': qta, 'selezionato': True
         })
+        salva_dati()
         st.session_state.input_nome = "" # pulisce i campi per quando inseriremo il prossimo ingrediente
         st.session_state.input_qta = ""
 
@@ -49,6 +56,17 @@ def elimina_ingrediente(id_da_eliminare): # elimina l'igrediente e lascia in bac
         item for item in st.session_state.dispensa 
         if item['id'] != id_da_eliminare
     ]
+    salva_dati()
+
+# ---------------- MEMORIA ----------------
+if 'dispensa' not in st.session_state: # st.session_state è una memoria che salva la lista della dispensa
+    dati_salvati = carica_dati()
+    if not dati_salvati: 
+         st.session_state.dispensa = []
+    else :
+         st.session_state.dispensa = dati_salvati
+ 
+
 
 # ---------------- INTERFACCIA GRAFICA----------------
 st.title("🧑‍🍳 Dispensa AI Chef")
@@ -100,4 +118,4 @@ if st.button("✨ Inventa Ricetta con IA", type="primary", use_container_width=T
 if 'ricetta' in st.session_state:
     st.markdown("---")
     st.success("Ecco la tua ricetta!")
-    st.markdown(st.session_state.ricetta)#evvai
+    st.markdown(st.session_state.ricetta)
