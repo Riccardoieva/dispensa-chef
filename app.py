@@ -38,18 +38,43 @@ def carica_dati():     #Apre il quaderno in lettura ("r") e carica i dati dentro
             return json.load(f)
     except FileNotFoundError:   #se il quaderno non esiste, crea una dispensa vuota.
         return []
+@st.cache_data(show_spinner=False)
+def is_cibo(parola):  #ho creaotro il "buttafuori", verifica che un ingrediente sia un vero alimento 
+    try:    
+        model = genai.GenerativeModel("models/gemini-2.5-pro")
+        prompt = f"Dimmi se la seguente parola è un ingrediente alimentare o cibo: {parola}. Rispondi RIGOROSAMENTE solo con 'SI' o 'NO'."
+        response = model.generate_content(prompt)
+        text = response.text.strip().upper()
+        return text == "SI" 
+    except Exception:
+      return False   
 
 def aggiungi_ingrediente():
     nome = st.session_state.input_nome
     qta = st.session_state.input_qta
     if nome:
-        nuovo_id = len(st.session_state.dispensa) + 100 # crea un nuovo id ed aggiunge 100 in modo da renderlo univoco
+        with st.spinner("Verifica ingrediente..."):
+            if not is_cibo(nome):
+                st.error(f"⛔ '{nome}' non è un alimento!")
+                st.session_state.input_nome = ""
+                st.session_state.input_qta = ""
+                return
+        nome_pulito = nome.strip().lower()
+        for item in st.session_state.dispensa:
+            if item['nome'].strip().lower() == nome_pulito:
+                st.warning(f"✋ {nome} è già presente!")
+                return
+        if len(st.session_state.dispensa) > 0:
+            max_id = max([item['id'] for item in st.session_state.dispensa])
+            nuovo_id = max_id + 1
+        else:
+            nuovo_id = 1
         st.session_state.dispensa.append({
             'id': nuovo_id, 'nome': nome, 'qta': qta, 'selezionato': True
         })
         salva_dati()
         st.session_state.input_nome = "" # pulisce i campi per quando inseriremo il prossimo ingrediente
-        st.session_state.input_qta = ""
+        st.session_state.input_qta = ""               
 
 def elimina_ingrediente(id_da_eliminare): # elimina l'igrediente e lascia in bacheca quelli con un id diverso 
     st.session_state.dispensa = [
@@ -83,7 +108,14 @@ with st.container(border=True): # crea un riquadro per l'inserimento
 
 # LISTA
 st.subheader("La tua dispensa")
-for item in st.session_state.dispensa:
+search_query = st.text_input("🔍 Cerca nella dispensa", placeholder="Scrivi per filtrare...", label_visibility="collapsed")
+if search_query:
+    lista_filtrata = [item for item in st.session_state.dispensa 
+                       if search_query.lower() in item['nome'].lower()
+                       ]
+else:
+    lista_filtrata = st.session_state.dispensa                       
+for item in lista_filtrata:
     c1, c2, c3, c4 = st.columns([1, 4, 3, 1])
     with c1:
         item['selezionato'] = st.checkbox("", value=item['selezionato'], key=f"chk_{item['id']}")
