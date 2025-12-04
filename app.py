@@ -129,6 +129,12 @@ for item in lista_filtrata:
             elimina_ingrediente(item['id'])
             st.rerun()
 
+# BANNER INTOLLERANZE
+st.markdown("### ⚠️ Intolleranze o Allergie")
+intolleranze = st.text_input(
+    "Scrivi qui se hai esigenze particolari (es. senza glutine, no lattosio, vegano):",
+    placeholder="Es. Sono allergico alle noci..."
+)
 # BOTTONE IA
 st.divider()
 if st.button("✨ Inventa Ricetta con IA", type="primary", use_container_width=True):
@@ -137,11 +143,13 @@ if st.button("✨ Inventa Ricetta con IA", type="primary", use_container_width=T
     if not selezionati:
         st.warning("Seleziona almeno un ingrediente!")
     else:
-        with st.spinner(f"lo chef sta pensando...."):
+        with st.spinner(f"Lo chef sta pensando...."):
             try:
                 # Usiamo il modello scelto dalla tendina
                 model = genai.GenerativeModel("models/gemini-2.5-pro")
                 prompt = f"Sono un cuoco amatoriale. Ho in casa: {', '.join(selezionati)}. Inventa una ricetta."
+                if intolleranze:
+                    prompt += f" IMPORTANTE: La ricetta DEVE rispettare queste intolleranze/esigenze: {intolleranze}. Se non puoi, avvisami."
                 response = model.generate_content(prompt)
                 st.session_state.ricetta = response.text
             except Exception as e:
