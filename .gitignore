@@ -8,3 +8,4 @@ pycache/
 *.pyc
 .venv/
 .DS_Store
+dispensa.json
