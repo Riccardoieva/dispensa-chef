@@ -2,14 +2,14 @@ import streamlit as st
 import google.generativeai as genai
 import json
 import os
-FILE_DATI= "dispensa.json"
+FILE_DATI= "dispensa.json"     #nome del file dove salvare i dati della dispensa       
 
 # ---------------- CONFIGURAZIONE ----------------
 # inserire la API key 
 # 🔐 GESTIONE SICUREZZA API KEY
 # L'app cercherà la chiave nel "nascondiglio" (st.secrets)
 try:
-    if "GEMINI_API_KEY" in st.secrets:
+    if "GEMINI_API_KEY" in st.secrets:     
         API_KEY = st.secrets["GEMINI_API_KEY"]
     else:
         # Se non la trova nei secrets, prova a cercarla nelle variabili d'ambiente (utile per il cloud)
@@ -151,4 +151,4 @@ if st.button("✨ Inventa Ricetta con IA", type="primary", use_container_width=T
 if 'ricetta' in st.session_state:
     st.markdown("---")
     st.success("Ecco la tua ricetta!")
-    st.markdown(st.session_state.ricetta) #prova
+    st.markdown(st.session_state.ricetta)
