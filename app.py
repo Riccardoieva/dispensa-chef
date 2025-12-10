@@ -42,7 +42,7 @@ def carica_dati():     #Apre il quaderno in lettura ("r") e carica i dati dentro
 @st.cache_data(show_spinner=False)
 def is_cibo(parola):  #ho creaotro il "buttafuori", verifica che un ingrediente sia un vero alimento 
     try:    
-        model = genai.GenerativeModel("models/gemini-2.5-pro")
+        model = genai.GenerativeModel("models/gemini-2.5-flash")
         prompt = f"Dimmi se la seguente parola è un ingrediente alimentare o cibo: {parola}. Rispondi RIGOROSAMENTE solo con 'SI' o 'NO'."
         response = model.generate_content(prompt)
         text = response.text.strip().upper()
@@ -138,26 +138,27 @@ intolleranze = st.text_input(
 )
 # BOTTONE IA
 st.divider()
-if st.button("✨ Cerca una ricetta...", type="primary", use_container_width=True):
+if st.button("✨ Cerca 5 Ricette", type="primary", use_container_width=True):
     selezionati = [f"{i['nome']} ({i['qta']})" for i in st.session_state.dispensa if i['selezionato']]
-    
-    if not selezionati:
-        st.warning("Seleziona almeno un ingrediente!")
+    if not selezionati: st.warning("Seleziona ingredienti!")
     else:
-        with st.spinner(f"Lo chef sta pensando...."):
+        with st.spinner("Lo chef sta scrivendo 5 ricette..."):
             try:
-                # Usiamo il modello scelto dalla tendina
-                model = genai.GenerativeModel("models/gemini-2.5-pro")
-                prompt = f"Sono un cuoco amatoriale. Ho in casa: {', '.join(selezionati)}. Inventa una ricetta."
-                if intolleranze:
-                    prompt += f" IMPORTANTE: La ricetta DEVE rispettare queste intolleranze/esigenze: {intolleranze}. Se non puoi, avvisami."
-                response = model.generate_content(prompt)
-                st.session_state.ricetta = response.text
-            except Exception as e:
-                st.error(f"Errore IA: {e}")
-                st.write("Suggerimento: Prova a cambiare modello dalla tendina a sinistra! Oppure controlla la chiave API.")
+                model = genai.GenerativeModel("models/gemini-2.5-flash") # Usa flash per velocità
+                # Chiediamo all'IA di separare le ricette con "###"
+                prompt = f"Crea 5 ricette con: {', '.join(selezionati)}. {f'Vincoli: {intolleranze}' if intolleranze else ''}. Usa '###' come separatore all'inizio di ogni ricetta. La prima riga deve essere il titolo."
+                st.session_state.ricetta = model.generate_content(prompt).text
+            except Exception as e: st.error(e)
 
 if 'ricetta' in st.session_state:
-    st.markdown("---")
-    st.success("Ecco la tua ricetta!")
-    st.markdown(st.session_state.ricetta)
+    st.success("Ecco le proposte!")
+    # Separa l'introduzione (prima dei ###) dalle ricette
+    intro, *ricette = st.session_state.ricetta.split("###")
+    
+    if intro.strip(): st.write(intro) # Scrive l'intro fuori dalle tendine
+    
+    for r in ricette:
+        if r.strip():
+            # Separa la prima riga (titolo) da tutte le altre (testo) in un colpo solo
+            titolo, *testo = r.strip().split("\n") 
+            with st.expander(titolo): st.write("\n".join(testo))
