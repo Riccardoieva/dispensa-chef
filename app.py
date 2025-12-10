@@ -108,26 +108,27 @@ with st.container(border=True): # crea un riquadro per l'inserimento
         st.button("Aggiungi", on_click=aggiungi_ingrediente, use_container_width=True)
 
 # LISTA
-st.subheader("La tua dispensa")
-search_query = st.text_input("🔍 Cerca nella dispensa", placeholder="Scrivi per filtrare...", label_visibility="collapsed")
-if search_query:
-    lista_filtrata = [item for item in st.session_state.dispensa 
-                       if search_query.lower() in item['nome'].lower()
-                       ]
-else:
-    lista_filtrata = st.session_state.dispensa                       
-for item in lista_filtrata:
-    c1, c2, c3, c4 = st.columns([1, 4, 3, 1])
-    with c1:
-        item['selezionato'] = st.checkbox("", value=item['selezionato'], key=f"chk_{item['id']}")
-    with c2:
-        st.write(f"**{item['nome']}**")
-    with c3:
-        item['qta'] = st.text_input("", value=item['qta'], key=f"qta_{item['id']}", label_visibility="collapsed")
-    with c4:
-        if st.button("X", key=f"del_{item['id']}"):
-            elimina_ingrediente(item['id'])
-            st.rerun()
+with st.sidebar:
+    st.subheader("La tua dispensa")
+    search_query = st.text_input("🔍 Cerca nella dispensa", placeholder="Cerca nella tua dispensa...", label_visibility="collapsed")
+    if search_query:
+        lista_filtrata = [item for item in st.session_state.dispensa 
+                        if search_query.lower() in item['nome'].lower()
+                        ]
+    else:
+        lista_filtrata = st.session_state.dispensa                       
+    for item in lista_filtrata:
+        c1, c2, c3, c4 = st.columns([1, 3, 3, 1])
+        with c1:
+            item['selezionato'] = st.checkbox("", value=item['selezionato'], key=f"chk_{item['id']}")
+        with c2:
+            st.write(f"**{item['nome']}**")
+        with c3:
+            item['qta'] = st.text_input("", value=item['qta'], key=f"qta_{item['id']}", label_visibility="collapsed")
+        with c4:
+            if st.button("X", key=f"del_{item['id']}"):
+                elimina_ingrediente(item['id'])
+                st.rerun()
 
 # BANNER INTOLLERANZE
 st.markdown("### ⚠️ Intolleranze o Allergie")
@@ -137,7 +138,7 @@ intolleranze = st.text_input(
 )
 # BOTTONE IA
 st.divider()
-if st.button("✨ Inventa Ricetta con IA", type="primary", use_container_width=True):
+if st.button("✨ Cerca una ricetta...", type="primary", use_container_width=True):
     selezionati = [f"{i['nome']} ({i['qta']})" for i in st.session_state.dispensa if i['selezionato']]
     
     if not selezionati:
