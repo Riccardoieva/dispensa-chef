@@ -130,35 +130,35 @@ with st.sidebar:
                 elimina_ingrediente(item['id'])
                 st.rerun()
 
-# BANNER INTOLLERANZE
-st.markdown("### ⚠️ Intolleranze o Allergie")
-intolleranze = st.text_input(
-    "Scrivi qui se hai esigenze particolari (es. senza glutine, no lattosio, vegano):",
-    placeholder="Es. Sono allergico alle noci..."
-)
+# BANNER OPZIONI
+st.markdown("### 🍳 Preferenze Ricetta") # Titolo più generico
+c1, c2 = st.columns([3, 2]) # Colonne bilanciate
+
+with c1:
+    intolleranze = st.text_input("Eventuali intolleranze/allergie:", placeholder="Es. Senza glutine...")
+with c2:
+    persone = st.number_input("Per quante persone cucini?", min_value=1, value=2)
+
 # BOTTONE IA
 st.divider()
 if st.button("✨ Cerca 5 Ricette", type="primary", use_container_width=True):
     selezionati = [f"{i['nome']} ({i['qta']})" for i in st.session_state.dispensa if i['selezionato']]
     if not selezionati: st.warning("Seleziona ingredienti!")
     else:
-        with st.spinner("Lo chef sta scrivendo 5 ricette..."):
+        with st.spinner(f"Creo un menù per {persone} persone..."):
             try:
-                model = genai.GenerativeModel("models/gemini-2.5-flash") # Usa flash per velocità
-                # Chiediamo all'IA di separare le ricette con "###"
-                prompt = f"Crea 5 ricette con: {', '.join(selezionati)}. {f'Vincoli: {intolleranze}' if intolleranze else ''}. Usa '###' come separatore all'inizio di ogni ricetta. La prima riga deve essere il titolo."
+                model = genai.GenerativeModel("models/gemini-2.5-flash")
+                prompt = f"Crea 5 ricette per {persone} persone usando: {', '.join(selezionati)}. {f'Escludi rigorosamente: {intolleranze}' if intolleranze else ''}. Usa '###' all'inizio di ogni titolo di ricetta."
                 st.session_state.ricetta = model.generate_content(prompt).text
             except Exception as e: st.error(e)
 
 if 'ricetta' in st.session_state:
-    st.success("Ecco le proposte!")
-    # Separa l'introduzione (prima dei ###) dalle ricette
+    st.success(f"Ecco le proposte per {persone} persone!")
     intro, *ricette = st.session_state.ricetta.split("###")
     
-    if intro.strip(): st.write(intro) # Scrive l'intro fuori dalle tendine
+    if intro.strip(): st.write(intro)
     
     for r in ricette:
         if r.strip():
-            # Separa la prima riga (titolo) da tutte le altre (testo) in un colpo solo
-            titolo, *testo = r.strip().split("\n") 
+            titolo, *testo = r.strip().split("\n")
             with st.expander(titolo): st.write("\n".join(testo))
