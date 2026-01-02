@@ -10,7 +10,6 @@ try:
     if "GEMINI_API_KEY" in st.secrets:     
         API_KEY = st.secrets["GEMINI_API_KEY"]
     else:
-        # Se non la trova nei secrets, prova a cercarla nelle variabili d'ambiente (utile per il cloud)
         API_KEY = os.getenv("GEMINI_API_KEY")
 
     if not API_KEY:
@@ -27,15 +26,15 @@ except Exception as e:
     st.error(f"Errore Configurazione Chiave: {e}") # mostra errore a schermo
 
 # ---------------- FUNZIONI ----------------
-def salva_dati():                      #salva_dati(): Apre il quaderno (FILE_DATI) in modalità scrittura ("w") 
-    with open(FILE_DATI, 'w') as f:    # e ci copia dentro (dump) tutto quello che c'è nella dispensa attuale.
+def salva_dati():                      # Apre il file in modalità scrittura 
+    with open(FILE_DATI, 'w') as f:    # e ci copia dentro tutto quello che c'è nella dispensa attuale.
         json.dump(st.session_state.dispensa, f)
 
-def carica_dati():     #Apre il quaderno in lettura ("r") e carica i dati dentro la dispensa.
+def carica_dati():     #Apre il file in lettura e carica i dati dentro la dispensa.
     try:
         with open(FILE_DATI, 'r') as f:
             return json.load(f)
-    except FileNotFoundError:   #se il quaderno non esiste, crea una dispensa vuota.
+    except FileNotFoundError:   #se il file non esiste, crea una dispensa vuota.
         return []
 @st.cache_data(show_spinner=False)
 def is_cibo(parola):  #ho creaotro il "buttafuori", verifica che un ingrediente sia un vero alimento 
@@ -52,18 +51,18 @@ def aggiungi_ingrediente():
     nome = st.session_state.input_nome
     qta = st.session_state.input_qta
     if nome:
-        with st.spinner("Verifica ingrediente..."):
+        with st.spinner("Verifica ingrediente..."): # rotella di caricamento
             if not is_cibo(nome):
                 st.error(f"STOP '{nome}' non è un alimento!")
                 st.session_state.input_nome = ""
                 st.session_state.input_qta = ""
                 return
-        nome_pulito = nome.strip().lower()
+        nome_pulito = nome.strip().lower() #pulisce il nome, toglie spazi extra e mette tutto minuscolo
         for item in st.session_state.dispensa:
             if item['nome'].strip().lower() == nome_pulito:
                 st.warning(f"ATTENZIONE {nome} è già presente!")
                 return
-        if len(st.session_state.dispensa) > 0:
+        if len(st.session_state.dispensa) > 0:  # da identificativo univoco ad ogni alimento
             max_id = max([item['id'] for item in st.session_state.dispensa])
             nuovo_id = max_id + 1
         else:
@@ -106,16 +105,16 @@ with st.container(border=True): # crea un riquadro per l'inserimento
         st.button("Aggiungi", on_click=aggiungi_ingrediente, use_container_width=True)
 
 # LISTA
-with st.sidebar:
-    st.subheader("La tua dispensa")
-    search_query = st.text_input("🔍 Cerca nella dispensa", placeholder="Cerca nella tua dispensa...", label_visibility="collapsed")
+with st.sidebar:    # dice di inserire il codice nella barra laterale a sinistra
+    st.subheader("La tua dispensa") 
+    search_query = st.text_input("🔍 Cerca nella dispensa", placeholder="Cerca nella tua dispensa...", label_visibility="collapsed")  #barra di ricerca per gli alimenti
     if search_query:
         lista_filtrata = [item for item in st.session_state.dispensa 
                         if search_query.lower() in item['nome'].lower()
                         ]
     else:
         lista_filtrata = st.session_state.dispensa                       
-    for item in lista_filtrata:
+    for item in lista_filtrata:        
         c1, c2, c3, c4 = st.columns([1, 3, 3, 1])
         with c1:
             item['selezionato'] = st.checkbox("", value=item['selezionato'], key=f"chk_{item['id']}")
@@ -129,24 +128,24 @@ with st.sidebar:
                 st.rerun()
 
 # BANNER OPZIONI
-st.markdown("### 🍳 Preferenze Ricetta") # Titolo più generico
-c1, c2 = st.columns([3, 2]) # Colonne bilanciate
+st.markdown("### 🍳 Preferenze Ricetta") 
+c1, c2 = st.columns([3, 2])
 
 with c1:
-    intolleranze = st.text_input("Eventuali intolleranze/allergie:", placeholder="Es. Senza glutine...")
+    intolleranze = st.text_input("Eventuali intolleranze/allergie:", placeholder="Es. Senza glutine...")   #colonna per poter inserire le intolleranze
 with c2:
-    persone = st.number_input("Per quante persone cucini?", min_value=1, value=2)
+    persone = st.number_input("Per quante persone cucini?", min_value=1, value=2)  #colonna per indicare per quante persone bisogna cucinare
 
 # BOTTONE IA
-st.divider()
-if st.button("✨ Cerca 5 Ricette", type="primary", use_container_width=True):
+st.divider()  #linea di separazione
+if st.button("✨ Cerca 5 Ricette", type="primary", use_container_width=True):  # crea un bottone
     selezionati = [f"{i['nome']} ({i['qta']})" for i in st.session_state.dispensa if i['selezionato']]
     if not selezionati: st.warning("Seleziona ingredienti!")
     else:
-        with st.spinner(f"Creo un menù per {persone} persone..."):
+        with st.spinner(f"Creo un menù per {persone} persone..."):   #mostra il caricamento dell'AI a schermo
             try:
                 model = genai.GenerativeModel("models/gemini-2.5-flash")
-                prompt = (f"Agisci come un esperto chef accademico. Crea 5 ricette INDIPENDENTI tra loro "
+                prompt = (f"Agisci come un esperto chef accademico. Crea 5 ricette INDIPENDENTI tra loro "  #prompt dettagliato da inviare all'AI
                     f"per {persone} persone, basandoti su questa dispensa: {', '.join(selezionati)}. "
                     f"REGOLE IMPORTANTI PER LE DOSI:\n"
                     f"- NON usare obbligatoriamente tutto l'ingrediente se la quantità è eccessiva.\n"
@@ -159,17 +158,17 @@ if st.button("✨ Cerca 5 Ricette", type="primary", use_container_width=True):
                     f"**Ingredienti:** (elenco con dosi precise per {persone} persone)\n"
                     f"**Procedimento:** (punti numerati chiari e tecnici)"
                 )
-                st.session_state.ricetta = model.generate_content(prompt).text
+                st.session_state.ricetta = model.generate_content(prompt).text  #salva la ricetta, anche se l'utente clicca altro la ricetta resta
             except Exception as e: 
                 st.error(e)
 
 if 'ricetta' in st.session_state:
     st.success(f"Ecco le proposte per {persone} persone!")
-    intro, *ricette = st.session_state.ricetta.split("###")
+    intro, *ricette = st.session_state.ricetta.split("###")   #divide il testo in introduzione e ricette
     
     if intro.strip(): st.write(intro)
     
     for r in ricette:
         if r.strip():
-            titolo, *testo = r.strip().split("\n")
+            titolo, *testo = r.strip().split("\n")  #crea dei box che si aprono e chiudono a fisarmonica
             with st.expander(titolo): st.write("\n".join(testo))
