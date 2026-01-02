@@ -148,9 +148,25 @@ if st.button("✨ Cerca 5 Ricette", type="primary", use_container_width=True):
         with st.spinner(f"Creo un menù per {persone} persone..."):
             try:
                 model = genai.GenerativeModel("models/gemini-2.5-flash")
-                prompt = f"Crea 5 ricette per {persone} persone usando: {', '.join(selezionati)}. {f'Escludi rigorosamente: {intolleranze}' if intolleranze else ''}. Usa '###' all'inizio di ogni titolo di ricetta."
+                prompt = (f"Agisci come un esperto chef accademico. Crea 5 ricette INDIPENDENTI tra loro "
+                    f"per {persone} persone, basandoti su questa dispensa: {', '.join(selezionati)}. "
+                    f"REGOLE IMPORTANTI PER LE DOSI:\n"
+                    f"- NON usare obbligatoriamente tutto l'ingrediente se la quantità è eccessiva.\n"
+                    f"- Calcola le dosi giuste e bilanciate per {persone} persone.\n"
+                    f"- Ogni proposta è un'alternativa a sé stante.\n"
+                    f"{f'- Escludi rigorosamente: {intolleranze}.' if intolleranze else ''}\n\n"
+                    f"Per ogni ricetta segui RIGOROSAMENTE questo schema:\n"
+                    f"### Titolo della ricetta\n"
+                    f"**Descrizione:** (1 riga)\n"
+                    f"**Ingredienti:** (elenco con dosi precise per {persone} persone)\n"
+                    f"**Procedimento:** (punti numerati chiari e tecnici)"
+                )
+
+                # ------------------------------------
+
                 st.session_state.ricetta = model.generate_content(prompt).text
-            except Exception as e: st.error(e)
+            except Exception as e: 
+                st.error(e)
 
 if 'ricetta' in st.session_state:
     st.success(f"Ecco le proposte per {persone} persone!")
