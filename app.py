@@ -5,9 +5,7 @@ import os
 FILE_DATI= "dispensa.json"     #nome del file dove salvare i dati della dispensa       
 
 # ---------------- CONFIGURAZIONE ----------------
-# inserire la API key 
-# 🔐 GESTIONE SICUREZZA API KEY
-# L'app cercherà la chiave nel "nascondiglio" (st.secrets)
+# inserimento chiave API nascosta
 try:
     if "GEMINI_API_KEY" in st.secrets:     
         API_KEY = st.secrets["GEMINI_API_KEY"]
@@ -16,10 +14,10 @@ try:
         API_KEY = os.getenv("GEMINI_API_KEY")
 
     if not API_KEY:
-        st.error("⛔ ERRORE: Chiave API non trovata!")
+        st.error("ERRORE: Chiave API non trovata!")
         st.stop()
 except FileNotFoundError:
-    st.error("⛔ Manca la cartella .streamlit o il file secrets.toml")
+    st.error("Manca la cartella .streamlit o il file secrets.toml")
     st.stop()
 
 # Configura l'IA
@@ -56,14 +54,14 @@ def aggiungi_ingrediente():
     if nome:
         with st.spinner("Verifica ingrediente..."):
             if not is_cibo(nome):
-                st.error(f"⛔ '{nome}' non è un alimento!")
+                st.error(f"STOP '{nome}' non è un alimento!")
                 st.session_state.input_nome = ""
                 st.session_state.input_qta = ""
                 return
         nome_pulito = nome.strip().lower()
         for item in st.session_state.dispensa:
             if item['nome'].strip().lower() == nome_pulito:
-                st.warning(f"✋ {nome} è già presente!")
+                st.warning(f"ATTENZIONE {nome} è già presente!")
                 return
         if len(st.session_state.dispensa) > 0:
             max_id = max([item['id'] for item in st.session_state.dispensa])
@@ -161,9 +159,6 @@ if st.button("✨ Cerca 5 Ricette", type="primary", use_container_width=True):
                     f"**Ingredienti:** (elenco con dosi precise per {persone} persone)\n"
                     f"**Procedimento:** (punti numerati chiari e tecnici)"
                 )
-
-                # ------------------------------------
-
                 st.session_state.ricetta = model.generate_content(prompt).text
             except Exception as e: 
                 st.error(e)
